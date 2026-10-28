@@ -20,6 +20,30 @@ npm start          # http://localhost:8080
 
 The server runs both background jobs itself, so `npm start` alone is enough after the first ingest — it will catch up on a stale registry at boot.
 
+### fly.io (the deployed setup)
+
+`fly.toml` is committed and configured for this app's shape — a persistent
+volume for SQLite, and `auto_stop_machines = false` with
+`min_machines_running = 1`, because the ingest and liveness jobs have to keep
+running when nobody is on the site. A scale-to-zero platform would silently
+break the whole premise.
+
+```bash
+fly auth login
+fly launch --no-deploy --copy-config --name <your-app-name>
+fly volumes create opencam_data --size 3 --region <region>
+fly secrets set WINDY_API_KEY=...        # optional
+fly deploy
+```
+
+First boot starts with an empty database and fills it from the sources, so the
+map stays sparse for the first ten minutes or so and longer if Windy is on.
+
+**Put a CDN in front of `/img` before sending real traffic anywhere.** Every
+viewer pulls frames through the proxy to Caltrans, TfL, FL511 and the rest;
+uncached, a busy day turns this into a sustained load on public agency
+infrastructure. `FRAME_CACHE_SEC` only dedupes within one server process.
+
 ### Docker (recommended for 24×7)
 
 ```bash
