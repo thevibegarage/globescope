@@ -1,9 +1,9 @@
 # fly.io deployment. Create the app and volume once:
 #   fly launch --no-deploy --copy-config --name <your-app-name>
-#   fly volumes create opencam_data --size 3 --region <region>
+#   fly volumes create globescope_data --size 3 --region <region>
 #   fly secrets set WINDY_API_KEY=...
 #   fly deploy
-app = "opencam"
+app = "globescope"
 primary_region = "iad"
 
 [build]
@@ -11,7 +11,7 @@ primary_region = "iad"
 
 [env]
   PORT = "8080"
-  DB_PATH = "/app/data/opencam.db"
+  DB_PATH = "/app/data/globescope.db"
   INGEST_INTERVAL_MIN = "180"
   HEALTH_INTERVAL_MIN = "20"
   HEALTH_CONCURRENCY = "48"
@@ -19,7 +19,7 @@ primary_region = "iad"
   FRAME_CACHE_SEC = "15"
 
 [[mounts]]
-  source = "opencam_data"
+  source = "globescope_data"
   destination = "/app/data"
 
 [http_service]

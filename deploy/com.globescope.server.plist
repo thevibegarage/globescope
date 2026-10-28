@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- macOS 24x7 install. Fill the two placeholders first:
        sed -i '' "s|__NODE_BIN__|$(command -v node)|; s|__APP_DIR__|$PWD|g" \
-         deploy/com.opencam.server.plist
-       cp deploy/com.opencam.server.plist ~/Library/LaunchAgents/
-       launchctl load -w ~/Library/LaunchAgents/com.opencam.server.plist
+         deploy/com.globescope.server.plist
+       cp deploy/com.globescope.server.plist ~/Library/LaunchAgents/
+       launchctl load -w ~/Library/LaunchAgents/com.globescope.server.plist
      Stop with:
-       launchctl unload -w ~/Library/LaunchAgents/com.opencam.server.plist -->
+       launchctl unload -w ~/Library/LaunchAgents/com.globescope.server.plist -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>com.opencam.server</string>
+  <key>Label</key><string>com.globescope.server</string>
   <key>ProgramArguments</key>
   <array>
     <string>__NODE_BIN__</string>
@@ -22,7 +22,7 @@
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>__APP_DIR__/data/opencam.log</string>
-  <key>StandardErrorPath</key><string>__APP_DIR__/data/opencam.err.log</string>
+  <key>StandardOutPath</key><string>__APP_DIR__/data/globescope.log</string>
+  <key>StandardErrorPath</key><string>__APP_DIR__/data/globescope.err.log</string>
 </dict>
 </plist>

@@ -232,12 +232,12 @@ app.get('/clip/:id', serveClip);
 app.use(express.static(path.join(ROOT, 'public'), { etag: true, maxAge: 0, index: 'index.html' }));
 
 const server = app.listen(config.port, config.host, () => {
-  console.log(`[opencam] listening on http://${config.host}:${config.port}`);
+  console.log(`[globescope] listening on http://${config.host}:${config.port}`);
   const total = db.prepare('SELECT COUNT(*) c FROM cameras').get().c;
-  console.log(`[opencam] ${total} cameras in registry`);
+  console.log(`[globescope] ${total} cameras in registry`);
   if (!process.env.NO_JOBS) { startIngestLoop(); startHealthLoop(); }
 });
 
 for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, () => { console.log(`\n[opencam] ${sig}, closing`); server.close(() => process.exit(0)); });
+  process.on(sig, () => { console.log(`\n[globescope] ${sig}, closing`); server.close(() => process.exit(0)); });
 }

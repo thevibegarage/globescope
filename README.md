@@ -1,4 +1,4 @@
-# OpenCam
+# Globescope
 
 A live, zoomable world map of cameras that are **published for public viewing** — highway CCTV, road-weather cameras and civic webcams. Zoom into a city, see which feeds are on right now, click one and watch it.
 
@@ -6,13 +6,13 @@ Built to run 24×7: it re-pulls every provider's camera registry on a schedule, 
 
 ## What it does and does not index
 
-OpenCam only aggregates feeds that an agency or operator publishes openly: Caltrans district CCTV, TfL JamCams, Fintraffic road-weather cameras, state and provincial 511 systems, and (optionally) the Windy webcam network.
+Globescope only aggregates feeds that an agency or operator publishes openly: Caltrans district CCTV, TfL JamCams, Fintraffic road-weather cameras, state and provincial 511 systems, and (optionally) the Windy webcam network.
 
 It deliberately does **not** index private or unsecured cameras — the "search the internet for cameras left on default credentials" approach. Those cameras were never published for public viewing, and putting them on a map is unauthorized access dressed up as a directory. Every camera here arrives with its source and licence attached, shown in the app's About panel.
 
 ## Licence
 
-OpenCam's own code is MIT. The camera feeds it aggregates are **not** — each
+Globescope's own code is MIT. The camera feeds it aggregates are **not** — each
 remains under its provider's terms, listed per source below and in the app's
 About panel. Redistributing frames at scale is the provider's call, not this
 licence's.
@@ -38,7 +38,7 @@ break the whole premise.
 ```bash
 fly auth login
 fly launch --no-deploy --copy-config --name <your-app-name>
-fly volumes create opencam_data --size 3 --region <region>
+fly volumes create globescope_data --size 3 --region <region>
 fly secrets set WINDY_API_KEY=...        # optional
 fly deploy
 ```
@@ -57,7 +57,7 @@ infrastructure. `FRAME_CACHE_SEC` only dedupes within one server process.
 docker compose up -d --build
 ```
 
-Data lives in the `opencam-data` volume; `restart: unless-stopped` plus a container healthcheck covers crashes and reboots. For a bare-metal host, `deploy/opencam.service` (systemd) and `deploy/com.opencam.server.plist` (macOS launchd) do the same job.
+Data lives in the `globescope-data` volume; `restart: unless-stopped` plus a container healthcheck covers crashes and reboots. For a bare-metal host, `deploy/globescope.service` (systemd) and `deploy/com.globescope.server.plist` (macOS launchd) do the same job.
 
 ## How it works
 
@@ -86,7 +86,7 @@ onto the card — so the bytes change every pull and a frozen-frame check never
 fires.
 
 What does give them away is that one agency serves the same near-identical image
-from dozens of cameras at once. After every sweep, OpenCam buckets frame sizes
+from dozens of cameras at once. After every sweep, Globescope buckets frame sizes
 into 16-byte windows per source; a window holding 12 or more cameras is recorded
 as a placeholder signature, and every camera matching it is retired. Real scenes
 never cluster that tightly — they vary by kilobytes. Signatures are recomputed

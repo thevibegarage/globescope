@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "opencam",
+      "name": "globescope",
       "runtimeExecutable": "node",
       "runtimeArgs": ["src/server.js"],
       "port": 8080

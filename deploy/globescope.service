@@ -1,17 +1,17 @@
 # Linux 24x7 install:
-#   sudo cp deploy/opencam.service /etc/systemd/system/
-#   sudo systemctl daemon-reload && sudo systemctl enable --now opencam
+#   sudo cp deploy/globescope.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now globescope
 [Unit]
-Description=OpenCam public camera map
+Description=Globescope public camera map
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=opencam
-WorkingDirectory=/opt/opencam
+User=globescope
+WorkingDirectory=/opt/globescope
 ExecStart=/usr/bin/node src/server.js
-EnvironmentFile=-/opt/opencam/.env
+EnvironmentFile=-/opt/globescope/.env
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -22,7 +22,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/opencam/data
+ReadWritePaths=/opt/globescope/data
 
 [Install]
 WantedBy=multi-user.target

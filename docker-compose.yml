@@ -1,12 +1,12 @@
 services:
-  opencam:
+  globescope:
     build: .
-    container_name: opencam
+    container_name: globescope
     restart: unless-stopped
     ports:
       - "8080:8080"
     volumes:
-      - opencam-data:/app/data
+      - globescope-data:/app/data
     environment:
       # How often the camera registry is re-pulled from every source (minutes)
       INGEST_INTERVAL_MIN: "180"
@@ -24,4 +24,4 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
 volumes:
-  opencam-data:
+  globescope-data:

@@ -21,7 +21,7 @@ const int = (v, d) => (v === undefined || v === '' ? d : parseInt(v, 10));
 export const config = {
   port: int(process.env.PORT, 8080),
   host: process.env.HOST || '0.0.0.0',
-  dbPath: process.env.DB_PATH || path.join(ROOT, 'data', 'opencam.db'),
+  dbPath: process.env.DB_PATH || path.join(ROOT, 'data', 'globescope.db'),
 
   // Background jobs
   ingestIntervalMin: int(process.env.INGEST_INTERVAL_MIN, 180),
@@ -49,7 +49,7 @@ export const config = {
 
   userAgent:
     process.env.USER_AGENT ||
-    'OpenCam/1.0 (public webcam aggregator; +https://github.com/your/opencam)',
+    'Globescope/1.0 (public webcam aggregator; +https://github.com/your/globescope)',
 
   disabledSources: (process.env.DISABLED_SOURCES || '')
     .split(',').map((s) => s.trim()).filter(Boolean),

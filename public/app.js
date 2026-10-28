@@ -1,4 +1,4 @@
-/* OpenCam — live public camera map */
+/* Globescope — live public camera map */
 (() => {
 'use strict';
 

@@ -18,7 +18,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN mkdir -p /app/data && addgroup -S app && adduser -S app -G app && chown -R app:app /app
 # Stays root only long enough for the entrypoint to chown the volume.
 
-ENV NODE_ENV=production PORT=8080 DB_PATH=/app/data/opencam.db
+ENV NODE_ENV=production PORT=8080 DB_PATH=/app/data/globescope.db
 EXPOSE 8080
 VOLUME ["/app/data"]
 
