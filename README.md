@@ -13,7 +13,7 @@ It deliberately does **not** index private or unsecured cameras — the "search 
 ## Quick start
 
 ```bash
-npm install
+npm install            # needs Node 24+ (node:sqlite is flagged on 22)
 npm run ingest     # first pull: ~5 min, ~21k cameras
 npm start          # http://localhost:8080
 ```

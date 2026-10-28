@@ -5,7 +5,7 @@
   "description": "A 24x7 map of publicly published webcams and traffic CCTV feeds.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "start": "node src/server.js",

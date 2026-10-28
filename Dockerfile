@@ -1,4 +1,6 @@
-FROM node:22-alpine
+# node:sqlite is still behind --experimental-sqlite on Node 22; it is
+# unflagged from Node 24 on, and this app imports it at startup.
+FROM node:24-alpine
 
 # curl is used by the container healthcheck below
 RUN apk add --no-cache curl tini su-exec
@@ -9,8 +11,10 @@ RUN npm ci --omit=dev || npm install --omit=dev
 
 COPY src ./src
 COPY public ./public
+COPY scripts ./scripts
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN mkdir -p /app/data && addgroup -S app && adduser -S app -G app && chown -R app:app /app
 # Stays root only long enough for the entrypoint to chown the volume.
 
