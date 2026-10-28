@@ -10,6 +10,13 @@ OpenCam only aggregates feeds that an agency or operator publishes openly: Caltr
 
 It deliberately does **not** index private or unsecured cameras — the "search the internet for cameras left on default credentials" approach. Those cameras were never published for public viewing, and putting them on a map is unauthorized access dressed up as a directory. Every camera here arrives with its source and licence attached, shown in the app's About panel.
 
+## Licence
+
+OpenCam's own code is MIT. The camera feeds it aggregates are **not** — each
+remains under its provider's terms, listed per source below and in the app's
+About panel. Redistributing frames at scale is the provider's call, not this
+licence's.
+
 ## Quick start
 
 ```bash
