@@ -1,0 +1,27 @@
+services:
+  opencam:
+    build: .
+    container_name: opencam
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - opencam-data:/app/data
+    environment:
+      # How often the camera registry is re-pulled from every source (minutes)
+      INGEST_INTERVAL_MIN: "180"
+      # How often a liveness sweep starts, and how hard it pulls
+      HEALTH_INTERVAL_MIN: "20"
+      HEALTH_CONCURRENCY: "48"
+      HEALTH_PER_HOST: "8"
+      # A feed serving an unchanged frame for longer than this is "frozen"
+      STALE_AFTER_MIN: "90"
+      # Optional: worldwide webcams — free key at https://api.windy.com/keys
+      # WINDY_API_KEY: "..."
+      # WINDY_COUNTRIES: "IN,JP,TH,DE,FR,IT,BR"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  opencam-data:

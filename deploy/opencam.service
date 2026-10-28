@@ -1,0 +1,28 @@
+# Linux 24x7 install:
+#   sudo cp deploy/opencam.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now opencam
+[Unit]
+Description=OpenCam public camera map
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=opencam
+WorkingDirectory=/opt/opencam
+ExecStart=/usr/bin/node src/server.js
+EnvironmentFile=-/opt/opencam/.env
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/opencam/data
+
+[Install]
+WantedBy=multi-user.target

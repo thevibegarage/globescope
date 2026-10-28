@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>OpenCam — live public camera map</title>
+<meta name="description" content="A live map of publicly published webcams and traffic CCTV feeds. Zoom into a city to see what is streaming right now." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%230b0f14'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%2334d399'/%3E%3C/svg%3E" />
+<link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div id="map"></div>
+
+<div id="intro" class="intro">
+  <div class="introInner">
+    <div class="introMark"><span class="ring"></span><span class="pip"></span></div>
+    <h1>OpenCam</h1>
+    <p class="introSub">Public cameras, live, on one globe</p>
+    <p class="introCount"><strong id="introNum">0</strong> <span>feeds coming online</span></p>
+    <div class="introBar"><i id="introBarFill"></i></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <strong>OpenCam</strong>
+    <span class="tag" id="liveCount">loading…</span>
+  </div>
+
+  <div class="searchwrap">
+    <input id="search" type="search" placeholder="Search a city, road or camera…" autocomplete="off" spellcheck="false" />
+    <div id="results" class="results" hidden></div>
+  </div>
+
+  <div class="actions">
+    <button id="globeBtn" class="btn" title="Back to the spinning globe">Globe</button>
+    <button id="wallBtn" class="btn" title="Show a grid of live frames for this view">Wall</button>
+    <button id="filterBtn" class="btn" title="Filters">Filters</button>
+    <button id="aboutBtn" class="btn ghost" title="About and data sources">?</button>
+  </div>
+</header>
+
+<aside id="filters" class="panel filters" hidden>
+  <h3>Show</h3>
+  <label class="row"><input type="checkbox" id="fOnline" checked /> <span>Live <em id="cOnline"></em></span></label>
+  <label class="row"><input type="checkbox" id="fStale" checked /> <span>Frozen frame <em id="cStale"></em></span></label>
+  <label class="row"><input type="checkbox" id="fOffline" /> <span>Offline <em id="cOffline"></em></span></label>
+  <h3>Type</h3>
+  <div id="kinds" class="chips"></div>
+  <h3>Source</h3>
+  <div id="sources" class="chips"></div>
+</aside>
+
+<aside id="detail" class="panel detail" hidden>
+  <button class="close" data-close="detail">&times;</button>
+  <div class="viewer">
+    <img id="dImg" alt="" />
+    <video id="dVid" playsinline muted controls hidden></video>
+    <div id="dSpin" class="spin">connecting…</div>
+    <span id="dBadge" class="badge"></span>
+  </div>
+  <h2 id="dName"></h2>
+  <p id="dPlace" class="muted"></p>
+  <dl id="dMeta" class="meta"></dl>
+  <div class="detailActions">
+    <button id="dStream" class="btn" hidden>Play video stream</button>
+    <a id="dSrc" class="btn ghost" target="_blank" rel="noopener noreferrer">Provider site</a>
+  </div>
+  <p id="dAttr" class="attr"></p>
+</aside>
+
+<section id="wall" class="wall" hidden>
+  <header class="wallhead">
+    <strong>Live wall</strong>
+    <span id="wallInfo" class="muted"></span>
+    <button class="close" data-close="wall">&times;</button>
+  </header>
+  <div id="wallGrid" class="wallgrid"></div>
+</section>
+
+<dialog id="about" class="about">
+  <h2>OpenCam</h2>
+  <p>A live map of cameras that public agencies and webcam operators <strong>publish for public viewing</strong> — highway CCTV, road-weather cameras and civic webcams. Every feed here comes from an official open feed, credited below.</p>
+  <p class="warn">OpenCam does not index private or unsecured cameras. If a camera was not published for the public, it does not belong on a public map.</p>
+  <h3>Sources</h3>
+  <ul id="srcList"></ul>
+  <p class="muted" id="runInfo"></p>
+  <form method="dialog"><button class="btn">Close</button></form>
+</dialog>
+
+<footer class="credit">
+  <span>© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · tiles by <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a></span>
+</footer>
+
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

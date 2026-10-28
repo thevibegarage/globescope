@@ -1,0 +1,48 @@
+# fly.io deployment. Create the app and volume once:
+#   fly launch --no-deploy --copy-config --name <your-app-name>
+#   fly volumes create opencam_data --size 3 --region <region>
+#   fly secrets set WINDY_API_KEY=...
+#   fly deploy
+app = "opencam"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  DB_PATH = "/app/data/opencam.db"
+  INGEST_INTERVAL_MIN = "180"
+  HEALTH_INTERVAL_MIN = "20"
+  HEALTH_CONCURRENCY = "48"
+  HEALTH_PER_HOST = "8"
+  FRAME_CACHE_SEC = "15"
+
+[[mounts]]
+  source = "opencam_data"
+  destination = "/app/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # The ingest and liveness jobs must keep running with nobody on the site,
+  # so the machine is never allowed to sleep. This is the whole 24x7 premise.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 400
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "8s"
+  grace_period = "40s"
+  method = "GET"
+  path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

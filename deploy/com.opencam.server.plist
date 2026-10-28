@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- macOS 24x7 install. Fill the two placeholders first:
+       sed -i '' "s|__NODE_BIN__|$(command -v node)|; s|__APP_DIR__|$PWD|g" \
+         deploy/com.opencam.server.plist
+       cp deploy/com.opencam.server.plist ~/Library/LaunchAgents/
+       launchctl load -w ~/Library/LaunchAgents/com.opencam.server.plist
+     Stop with:
+       launchctl unload -w ~/Library/LaunchAgents/com.opencam.server.plist -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.opencam.server</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__NODE_BIN__</string>
+    <string>src/server.js</string>
+  </array>
+  <key>WorkingDirectory</key><string>__APP_DIR__</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PORT</key><string>8080</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>__APP_DIR__/data/opencam.log</string>
+  <key>StandardErrorPath</key><string>__APP_DIR__/data/opencam.err.log</string>
+</dict>
+</plist>
