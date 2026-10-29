@@ -323,12 +323,23 @@ function startFrames(cam) {
   spin.textContent = 'connecting…';
   const tick = () => {
     if (document.hidden || $('detail').hidden) return;
-    img.src = `${cam.image}?t=${Date.now()}`;
+    img.src = frameUrl(cam);
   };
   img.onload = () => { spin.style.display = 'none'; };
   img.onerror = () => { spin.style.display = ''; spin.textContent = 'feed unavailable right now'; };
   tick();
   state.timer = setInterval(tick, Math.max(5, Math.min(cam.refresh_sec, 60)) * 1000);
+}
+
+// One frame URL per camera per refresh window, derived from absolute time so
+// every viewer on earth asks for the same one. A per-request timestamp would
+// make each poll a unique object, giving an edge cache nothing to hit and
+// turning every viewer into another request to the agency behind the camera.
+// Re-assigning an unchanged src is a no-op, so polling costs nothing until
+// the window rolls over.
+function frameUrl(cam) {
+  const windowSec = Math.min(Math.max(cam.refresh_sec || 60, 15), 300);
+  return `${cam.image}?t=${Math.floor(Date.now() / (windowSec * 1000))}`;
 }
 
 let hls = null;
@@ -384,7 +395,7 @@ async function openWall() {
     cell.className = 'cell';
     cell.innerHTML = `<img alt="" loading="lazy"><span>${esc(cam.name)}</span>`;
     const img = cell.querySelector('img');
-    const tick = () => { if (!document.hidden && !$('wall').hidden) img.src = `${cam.image}?t=${Date.now()}`; };
+    const tick = () => { if (!document.hidden && !$('wall').hidden) img.src = frameUrl(cam); };
     // Stagger so 28 upstream fetches do not leave at the same instant.
     setTimeout(tick, i * 180);
     state.wallTimers.push(setInterval(tick, 20000));

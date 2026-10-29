@@ -3,6 +3,8 @@
  *   node scripts/smoke.mjs [baseUrl]
  * Exits non-zero on the first failure, so it works as a deploy gate.
  */
+import http from 'node:http';
+
 const BASE = process.argv[2] || process.env.BASE || 'http://localhost:8080';
 
 let failed = 0;
@@ -58,6 +60,37 @@ await check('frame proxy', async () => {
   if (!ct.startsWith('image/')) throw new Error(`content-type ${ct}`);
   if (buf.length < 1200) throw new Error(`only ${buf.length} bytes`);
   return `${ct}, ${(buf.length / 1024).toFixed(0)} KB`;
+});
+
+await check('frame cache headers', async () => {
+  // The whole point of the proxy is that an edge can serve repeats. A deploy
+  // that loses these headers quietly turns every viewer back into a request
+  // to a public agency, so it is a gate, not a nicety.
+  const r = await get(cam.image, 'raw');
+  await r.arrayBuffer();
+  const cc = r.headers.get('cache-control') || '';
+  const etag = r.headers.get('etag');
+  const ttl = +(cc.match(/s-maxage=(\d+)/)?.[1] || 0);
+  if (!ttl) throw new Error(`no s-maxage in "${cc}"`);
+  if (!etag) throw new Error('no ETag');
+  if (!/stale-if-error=\d+/.test(cc)) throw new Error('no stale-if-error');
+  if (cam.refresh_sec && ttl < Math.min(cam.refresh_sec, 300)) {
+    throw new Error(`s-maxage=${ttl} below the camera's ${cam.refresh_sec}s cadence`);
+  }
+
+  // Raw http, not fetch: the Fetch spec forces `cache-control: no-cache` onto
+  // any request carrying If-None-Match, which would defeat revalidation here.
+  const u = new URL(BASE + cam.image);
+  const status = await new Promise((resolve, reject) => {
+    const req = http.request(
+      { host: u.hostname, port: u.port || 80, path: u.pathname + u.search,
+        headers: { 'If-None-Match': etag } },
+      (res) => { res.resume(); resolve(res.statusCode); });
+    req.on('error', reject);
+    req.end();
+  });
+  if (status !== 304) throw new Error(`revalidation returned ${status}, not 304`);
+  return `s-maxage=${ttl}s, revalidates to 304`;
 });
 
 await check('bbox query', async () => {

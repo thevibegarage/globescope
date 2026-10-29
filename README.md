@@ -213,6 +213,79 @@ For the many North American 511 sites running the same platform, `makeCr511({ id
 | `GET /clip/:id` | MP4 / segment passthrough with byte ranges |
 | `GET /healthz` | liveness for your orchestrator |
 
+## Caching and the CDN
+
+This proxy stands between however large an audience the site gets and a few
+dozen public agency servers that never agreed to host it. It is therefore
+built to absorb traffic rather than relay it, and **the caching is not
+optional** — without it every viewer of a camera is another request to
+Caltrans, TfL or FL511.
+
+Four things do the work:
+
+**The cache lifetime follows the camera.** Every source states how often it
+publishes, and the registry records it: 60 s for most city traffic feeds,
+300 s for Windy's webcams, which are 53,101 of the 74k cameras. A frame is
+held — and advertised downstream — for that long, floored at `FRAME_CACHE_SEC`
+and capped at `FRAME_MAX_CACHE_SEC` so one wrong value cannot freeze a feed.
+Caching everything for a few seconds instead would mean fetching Windy fifteen
+times for every picture it actually produces.
+
+**Simultaneous viewers become one request.** Concurrent misses for a camera
+collapse into a single upstream fetch and all wait on it. Without this the
+cache only helps *after* a spike, which is the one moment it is needed.
+
+**The client asks for a URL an edge can cache.** `frameUrl()` in
+`public/app.js` requests `/img/<id>?t=<window>`, where the window is derived
+from absolute time — so every viewer on earth asks for the same URL during the
+same refresh window, and a poll between windows is a no-op that costs nothing.
+A naive `?t=${Date.now()}` cache-buster makes every poll a unique object and
+drops the edge hit rate to zero; that is what this replaced.
+
+**Nothing failing is retried by every viewer.** A camera whose upstream just
+failed is left alone for `FRAME_ERROR_CACHE_SEC`, errors carry a short
+`Cache-Control` of their own, and a frame kept past its freshness window is
+served stale rather than relaying a 502 — better for the viewer and free for
+the agency.
+
+Responses also carry `ETag` and `Last-Modified`, and a frame that has not
+changed keeps its original `Last-Modified` across refetches, so a camera
+pointed at a quiet road goes on answering `304` indefinitely.
+
+### Putting Cloudflare in front
+
+`/img/:id` has **no file extension**, so Cloudflare will not cache it under the
+default rules however good the headers are. One Cache Rule is required:
+
+1. Point the hostname at the app with a **proxied** (orange-cloud) DNS record.
+2. **Caching → Cache Rules → Create rule**, with the expression
+   `starts_with(http.request.uri.path, "/img/") or starts_with(http.request.uri.path, "/clip/")`
+3. Action **Eligible for cache**; Edge TTL **Use cache-control header**;
+   Browser TTL **Respect origin**. Leave the cache key including the query
+   string — the `?t=` window is what makes each object shared and finite.
+4. Do **not** widen this to `/api/*`. Those are per-viewer and already gzipped.
+
+`stale-while-revalidate` support varies by CDN and plan; where it is honoured
+the edge never blocks a viewer on a refresh, and where it is not the headers
+are simply ignored. Fly's own proxy does not cache, so without a CDN in front
+every request reaches the origin — the origin cache still protects the
+agencies, but the bandwidth is yours.
+
+### Knobs
+
+| variable | default | what it does |
+| --- | --- | --- |
+| `FRAME_CACHE_SEC` | 8 (15 on fly) | floor for a camera's cache lifetime |
+| `FRAME_MAX_CACHE_SEC` | 300 | cap, in case a source overstates its cadence |
+| `FRAME_CACHE_BYTES` | 96 MB | frame cache budget, counted in bytes, not entries |
+| `FRAME_CACHE_GRACE_SEC` | 900 | how long a stale frame is kept for serving on error |
+| `FRAME_STALE_REVALIDATE_SEC` | 120 | `stale-while-revalidate` advertised to the edge |
+| `FRAME_STALE_ERROR_SEC` | 900 | `stale-if-error` advertised to the edge |
+| `FRAME_ERROR_CACHE_SEC` | 30 | how long a failing camera is left alone |
+
+`GET /healthz` reports `frameCache` — entries, bytes, in-flight fetches and
+cameras currently failing.
+
 ## What has been verified
 
 Checked against the live feeds on this machine:
@@ -223,7 +296,9 @@ Checked against the live feeds on this machine:
 - the frame proxy, the HLS chain (master playlist → chunklist → MPEG-TS segment) and MP4 clips all serve through to a playing `<video>`;
 - map, clustering, city/camera search, detail panel and live wall all work in the browser;
 - the server restarts against an existing database and resumes its jobs;
-- `npm run smoke` passes all nine checks;
+- the caching behaves as described above, measured rather than assumed: against a synthetic origin that counts its hits, 30 simultaneous viewers produced **1** upstream fetch, a dead camera took **0** retries from 20 viewers inside the error window, and an upstream 503 was answered with the stale frame instead of an error. Validators were checked over raw HTTP, since the Fetch spec forces `cache-control: no-cache` onto any request carrying `If-None-Match` and would have made every check a false negative;
+- in the browser, 28 live frames on the wall over two refresh ticks inside one window made **0** requests and transferred **0** bytes, against 56 requests before the change;
+- `npm run smoke` passes all its checks;
 - the launchd plist passes `plutil -lint`.
 
 Not verified here: the Docker image build — this machine has no Docker daemon. The Dockerfile and compose file are written but untested, so build them once before relying on that path.
@@ -239,7 +314,7 @@ Not verified here: the Docker image build — this machine has no Docker daemon.
   secondary endpoint (which keys cameras differently) never retires records made
   by the primary one. Each of these is a failure mode that bit this project
   during development.
-- **Disk**: the SQLite file stays around 35 MB for ~74k cameras. No frames are archived — only the current frame is cached, in memory, for `FRAME_CACHE_SEC`.
+- **Disk**: the SQLite file stays around 35 MB for ~74k cameras. No frames are archived — only the current frame of a camera is held, in memory, inside a byte budget.
 - **Bandwidth**: a liveness sweep of the 21k agency cameras pulls roughly 1–2 GB (Windy's 53k are exempt). Lower it with a longer `HEALTH_INTERVAL_MIN`.
 - **Basemap**: the default style is CARTO's free dark-matter, which is fine at modest traffic. Swap the `style` URL in `public/app.js` for a keyed provider or self-hosted tiles before any serious load.
 - **Nominatim**: geocoding is rate-limited to 1 req/s and cached, per OSM's usage policy. Use your own geocoder if you expect real traffic.

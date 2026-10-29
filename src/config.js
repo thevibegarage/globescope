@@ -40,6 +40,23 @@ export const config = {
   // Proxy cache: how long a fetched frame is reused before refetching upstream.
   frameCacheSec: int(process.env.FRAME_CACHE_SEC, 8),
   maxFrameBytes: int(process.env.MAX_FRAME_BYTES, 8 * 1024 * 1024),
+  // Frames are held past their freshness window so an upstream outage can be
+  // answered with a slightly old picture instead of a 502. Bounded by bytes,
+  // not entries: one 8 MB frame costs as much as eighty ordinary ones.
+  frameCacheBytes: int(process.env.FRAME_CACHE_BYTES, 96 * 1024 * 1024),
+  frameCacheGraceSec: int(process.env.FRAME_CACHE_GRACE_SEC, 900),
+
+  // Each camera is cached for as long as its source says it publishes —
+  // 60 s for city traffic feeds, 300 s for Windy's webcams — floored at
+  // frameCacheSec and capped here, so one wrong value cannot freeze a feed.
+  frameMaxCacheSec: int(process.env.FRAME_MAX_CACHE_SEC, 300),
+  // The edge may serve a stale frame while it refreshes in the background, and
+  // may keep serving one for much longer if we are down or an agency is.
+  frameStaleRevalidateSec: int(process.env.FRAME_STALE_REVALIDATE_SEC, 120),
+  frameStaleErrorSec: int(process.env.FRAME_STALE_ERROR_SEC, 900),
+  // A camera that just failed is left alone for this long. Without it, every
+  // viewer of a dead camera is another request to a host already in trouble.
+  frameErrorCacheSec: int(process.env.FRAME_ERROR_CACHE_SEC, 30),
 
   // Optional sources that need credentials.
   windyApiKey: process.env.WINDY_API_KEY || '',

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { db } from './db.js';
 import { config, ROOT } from './config.js';
 import { activeSources } from './sources/index.js';
-import { serveFrame, serveHls, serveClip } from './media.js';
+import { serveFrame, serveHls, serveClip, frameCacheStats } from './media.js';
 import { startIngestLoop } from './jobs/ingest.js';
 import { startHealthLoop } from './jobs/health.js';
 
@@ -41,7 +41,12 @@ function statusFilter(q) {
 
 app.get('/healthz', (req, res) => {
   const total = db.prepare('SELECT COUNT(*) c FROM cameras').get().c;
-  res.json({ ok: true, cameras: total, uptime: Math.round(process.uptime()) });
+  res.json({
+    ok: true,
+    cameras: total,
+    uptime: Math.round(process.uptime()),
+    frameCache: frameCacheStats(),
+  });
 });
 
 app.get('/api/meta', (req, res) => {
