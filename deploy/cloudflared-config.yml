@@ -1,0 +1,28 @@
+# Cloudflare Tunnel for a Globescope instance that runs on your own machine
+# rather than a cloud host. Traffic reaches the app through Cloudflare's edge,
+# which is what makes the frame cache in src/media.js worth anything — see
+# "Caching and the CDN" in the README for the one Cache Rule it needs.
+#
+# No inbound port is opened and no public IP is exposed: cloudflared dials out.
+#
+# One-time setup (each step needs your Cloudflare account, so run them yourself):
+#   cloudflared tunnel login                     # browser sign-in, picks the zone
+#   cloudflared tunnel create globescope         # writes ~/.cloudflared/<UUID>.json
+#   cloudflared tunnel route dns globescope globescope.earth
+# Then fill in the two values below, and:
+#   cloudflared tunnel --config deploy/cloudflared-config.yml run
+
+tunnel: globescope
+credentials-file: __HOME__/.cloudflared/__TUNNEL_UUID__.json
+
+# Keep the connection pool warm; the map opens dozens of frame requests at once.
+originRequest:
+  connectTimeout: 10s
+  # Frames are small but numerous, and a cold camera can take a few seconds.
+  httpHostHeader: localhost
+
+ingress:
+  - hostname: __HOSTNAME__
+    service: http://localhost:8080
+  # Anything else that resolves here is not ours.
+  - service: http_status:404

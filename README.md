@@ -51,6 +51,33 @@ viewer pulls frames through the proxy to Caltrans, TfL, FL511 and the rest;
 uncached, a busy day turns this into a sustained load on public agency
 infrastructure. `FRAME_CACHE_SEC` only dedupes within one server process.
 
+### Your own machine, via Cloudflare Tunnel (no cloud host)
+
+The app is a single process with a SQLite file, so a laptop or a spare box that
+stays on runs it perfectly well. A tunnel then publishes it without opening an
+inbound port or exposing a home IP — cloudflared dials out, and traffic still
+arrives through Cloudflare's edge, so the Cache Rule above applies exactly as
+it would in front of a cloud host.
+
+    brew install cloudflared
+    cloudflared tunnel login                  # picks the zone, needs your account
+    cloudflared tunnel create globescope      # writes ~/.cloudflared/<UUID>.json
+    cloudflared tunnel route dns globescope <your-hostname>
+
+Fill the placeholders in `deploy/cloudflared-config.yml`, then install
+`deploy/com.globescope.tunnel.plist` the same way as the server plist so both
+come back after a reboot. The header comments in each file carry the commands.
+
+Two things to know before relying on this:
+
+- **A quick tunnel is not a substitute.** `cloudflared tunnel --url
+  http://localhost:8080` gives a `trycloudflare.com` URL in seconds with no
+  account, but it is not a zone you control, so no Cache Rule applies and
+  nothing is cached at the edge. Every frame then comes off your own
+  connection. It is fine for showing someone the map, not for launching.
+- **Bandwidth is yours.** With the edge cache working, repeat viewers cost you
+  almost nothing; without it, each one is a full frame pull per camera.
+
 ### Docker (recommended for 24×7)
 
 ```bash

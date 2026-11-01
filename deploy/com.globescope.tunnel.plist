@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Keeps the Cloudflare Tunnel up alongside com.globescope.server, so the
+     site stays reachable across reboots. Install after the one-time
+     `cloudflared tunnel login / create / route dns` steps in
+     deploy/cloudflared-config.yml:
+
+       sed -i '' "s|__CLOUDFLARED_BIN__|$(command -v cloudflared)|; s|__APP_DIR__|$PWD|g" \
+         deploy/com.globescope.tunnel.plist
+       cp deploy/com.globescope.tunnel.plist ~/Library/LaunchAgents/
+       launchctl bootstrap gui/$UID ~/Library/LaunchAgents/com.globescope.tunnel.plist
+
+     Stop with:
+       launchctl bootout gui/$UID/com.globescope.tunnel -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.globescope.tunnel</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__CLOUDFLARED_BIN__</string>
+    <string>tunnel</string>
+    <string>--no-autoupdate</string>
+    <string>--config</string>
+    <string>__APP_DIR__/deploy/cloudflared-config.yml</string>
+    <string>run</string>
+  </array>
+  <key>WorkingDirectory</key><string>__APP_DIR__</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <!-- The app is a local service; if it is slow to start, cloudflared should
+       keep retrying rather than give up and leave the hostname dead. -->
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardOutPath</key><string>__APP_DIR__/data/tunnel.log</string>
+  <key>StandardErrorPath</key><string>__APP_DIR__/data/tunnel.err.log</string>
+</dict>
+</plist>
